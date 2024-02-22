@@ -1,5 +1,8 @@
+import "./globals.css";
+
 import { cn } from "@/lib/cn";
 import { Poppins } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -11,9 +14,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={cn(poppins.className)}>
-        {children}
-      </body>
+      <ClerkProvider>
+        <body className={cn(poppins.className, "bg-gray-800")}>{children}</body>
+      </ClerkProvider>
     </html>
   );
 }
