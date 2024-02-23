@@ -1,0 +1,6 @@
+{
+  "databaseURL": "https://Gurvir-Singh-s-workspace-1fjfko.eu-central-1.xata.sh/db/mc",
+  "codegen": {
+    "output": "src/xata.ts"
+  }
+}
