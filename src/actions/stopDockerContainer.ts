@@ -31,6 +31,20 @@ export const stopDockerContainer = async function () {
       revalidatePath("/servers");
     }
 
+    for await (const chunk of command.stderr) {
+      if (
+        chunk.toString().trim() ==
+        `Error response from daemon: No such container: ${runningContainer.serverID}`
+      ) {
+        // Means the container has already exited
+        // so, remove the connection between the container and user.
+        await runningContainer.delete();
+
+        // Revalidating the website contents
+        revalidatePath("/servers");
+      }
+    }
+
     return true;
   } catch (err) {
     console.log(err);

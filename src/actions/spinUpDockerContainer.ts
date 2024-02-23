@@ -27,7 +27,8 @@ export const spinUpDockerContainer = async function (formData: FormData) {
   // Spinning up a docker container
   const command = spawn("docker", [
     "run",
-    "-d",
+    "-d",                                     // Run container in background.
+    "--rm",                                   // Automatically removes the container when it exits.
     "-e",
     "EULA=TRUE",
     "itzg/minecraft-server",
