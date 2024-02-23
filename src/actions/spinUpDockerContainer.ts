@@ -1,8 +1,10 @@
 import { auth } from "@clerk/nextjs";
 import { getXataClient } from "@/xata";
 
-import { exec, spawn } from "child_process";
+import { spawn } from "child_process";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { getContainerStatus } from "@/actions/getContainerStatus";
 
 export const spinUpDockerContainer = async function (formData: FormData) {
   "use server";
@@ -18,37 +20,29 @@ export const spinUpDockerContainer = async function (formData: FormData) {
 
   // Abort
   // if ther user has already created a container
-  const runningContainers = await client.db.connection
-    .filter({
-      userID: userId,
-    })
-    .getAll();
-
-  if (runningContainers.length > 0) {
+  if (await getContainerStatus()) {
     return;
   }
 
   // Spinning up a docker container
-  exec(
-    "docker run -d -e EULA=TRUE itzg/minecraft-server",
-    async (error, stdout: string, stderr: string) => {
-      if (error || stderr) {
-        return console.log({
-          error,
-          stderr,
-        });
-      }
+  const command = spawn("docker", [
+    "run",
+    "-d",
+    "-e",
+    "EULA=TRUE",
+    "itzg/minecraft-server",
+  ]);
 
-      if (stdout) {
-        // Getting the containerID from the stdout of the console.
-        const serverID = stdout.trim().slice(0, 11);
+  for await (const chunk of command.stdout) {
+    // Getting the containerID from the stdout of the console.
+    const serverID = chunk.toString().trim().slice(0, 11);
 
-        // Link the container to the logged in user.
-        await client.db.connection.create({
-          userID: userId,
-          serverID: serverID,
-        });
-      }
-    },
-  );
+    // Link the container to the logged in user.
+    await client.db.connection.create({
+      userID: userId,
+      serverID: serverID,
+    });
+
+    revalidatePath("/servers");
+  }
 };
